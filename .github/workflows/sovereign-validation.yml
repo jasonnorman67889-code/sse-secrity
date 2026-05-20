@@ -35,7 +35,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install JavaScript dependencies
-        run: npm ci
+        run: npm install
 
       - name: Install Python dependencies
         run: python -m pip install -r scripts/requirements-autonomous-soc.txt requests
