@@ -32,3 +32,9 @@ keys/
 
 *storybook.log
 storybook-static
+
+# Runtime artifacts
+logs/*.log
+scripts/.sentinel-golden-cache.json
+__pycache__/
+*.pyc
