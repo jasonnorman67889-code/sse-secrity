@@ -1,0 +1,121 @@
+services:
+  neo4j-graph:
+    image: neo4j:5.26
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      NEO4J_AUTH: neo4j/password
+    volumes:
+      - neo4j-data:/data
+
+  kafka-stream:
+    image: bitnamilegacy/kafka:3.9
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_ENABLE_KRAFT: "yes"
+      KAFKA_CFG_PROCESS_ROLES: broker,controller
+      KAFKA_CFG_NODE_ID: "1"
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka-stream:9092
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 1@kafka-stream:9093
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+    volumes:
+      - kafka-data:/bitnami/kafka
+
+  node-tokyo:
+    build:
+      context: .
+      dockerfile: workstation-agent/Dockerfile
+    environment:
+      SOVEREIGN_API_ENDPOINT: http://host.docker.internal:5173/api/identity-events
+      NODE_ID: Node-TYO-01
+      ACTOR_ID: workstation-agent-tokyo
+      LAT: 35.6895
+      LON: 139.6917
+      SOVEREIGN_SCAN_INTERVAL_SECONDS: 10
+      SOVEREIGN_HTTP_TIMEOUT_SECONDS: 10
+
+  node-losangeles:
+    build:
+      context: .
+      dockerfile: workstation-agent/Dockerfile
+    depends_on:
+      - neo4j-graph
+      - kafka-stream
+    environment:
+      SOVEREIGN_API_ENDPOINT: http://host.docker.internal:5173/api/identity-events
+      NODE_ID: Node-LA-01
+      ACTOR_ID: workstation-agent-losangeles
+      LAT: 34.0522
+      LON: -118.2437
+      SOVEREIGN_SCAN_INTERVAL_SECONDS: 10
+      SOVEREIGN_HTTP_TIMEOUT_SECONDS: 10
+      SOVEREIGN_CLUSTER_SYNC_GROUP: global-triad
+
+  node-singapore:
+    build:
+      context: .
+      dockerfile: workstation-agent/Dockerfile
+    depends_on:
+      - neo4j-graph
+      - kafka-stream
+    environment:
+      SOVEREIGN_API_ENDPOINT: http://host.docker.internal:5173/api/identity-events
+      NODE_ID: Node-SGP-01
+      ACTOR_ID: workstation-agent-singapore
+      LAT: 1.3521
+      LON: 103.8198
+      SOVEREIGN_SCAN_INTERVAL_SECONDS: 10
+      SOVEREIGN_HTTP_TIMEOUT_SECONDS: 10
+      SOVEREIGN_CLUSTER_SYNC_GROUP: global-triad
+
+  node-london:
+    build:
+      context: .
+      dockerfile: workstation-agent/Dockerfile
+    depends_on:
+      - neo4j-graph
+      - kafka-stream
+    environment:
+      SOVEREIGN_API_ENDPOINT: http://host.docker.internal:5173/api/identity-events
+      NODE_ID: Node-LDN-01
+      ACTOR_ID: workstation-agent-london
+      LAT: 51.5074
+      LON: -0.1278
+      SOVEREIGN_SCAN_INTERVAL_SECONDS: 10
+      SOVEREIGN_HTTP_TIMEOUT_SECONDS: 10
+      SOVEREIGN_CLUSTER_SYNC_GROUP: global-triad
+
+  node-frankfurt:
+    build:
+      context: .
+      dockerfile: workstation-agent/Dockerfile
+    environment:
+      SOVEREIGN_API_ENDPOINT: http://host.docker.internal:5173/api/identity-events
+      NODE_ID: Node-FRA-01
+      ACTOR_ID: workstation-agent-frankfurt
+      LAT: 50.1109
+      LON: 8.6821
+      SOVEREIGN_SCAN_INTERVAL_SECONDS: 10
+      SOVEREIGN_HTTP_TIMEOUT_SECONDS: 10
+
+  node-saopaulo:
+    build:
+      context: .
+      dockerfile: workstation-agent/Dockerfile
+    environment:
+      SOVEREIGN_API_ENDPOINT: http://host.docker.internal:5173/api/identity-events
+      NODE_ID: Node-SAO-01
+      ACTOR_ID: workstation-agent-saopaulo
+      LAT: -23.5505
+      LON: -46.6333
+      SOVEREIGN_SCAN_INTERVAL_SECONDS: 10
+      SOVEREIGN_HTTP_TIMEOUT_SECONDS: 10
+
+volumes:
+  neo4j-data:
+  kafka-data:

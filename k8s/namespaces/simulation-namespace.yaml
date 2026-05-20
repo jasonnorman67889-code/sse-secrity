@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: simulation
+  labels:
+    app.kubernetes.io/name: sovereign-command-center
+    app.kubernetes.io/part-of: sovereign-defense-lab
+    sovereign.io/layer: simulation
+    sovereign.io/isolated: "true"
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: simulation-quota
+  namespace: simulation
+spec:
+  hard:
+    requests.cpu: "4"
+    requests.memory: 8Gi
+    limits.cpu: "8"
+    limits.memory: 16Gi
+    pods: "20"
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: simulation-default-deny
+  namespace: simulation
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress

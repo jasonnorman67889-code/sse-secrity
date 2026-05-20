@@ -1,0 +1,15 @@
+.git
+.gitignore
+node_modules
+build
+logs
+snapshots
+coverage
+.vscode
+.DS_Store
+*.log
+bin/
+keys/
+!keys/
+!keys/sovereign_private.pem
+prisma/migrations/

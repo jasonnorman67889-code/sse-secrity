@@ -1,0 +1,38 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Identity Audit Pipeline: Tracks biometric/workstation authentication events
+model IdentityEvent {
+  id            String   @id @default(cuid())
+  timestamp     DateTime @default(now())
+  actorId       String
+  action        String
+  workstationId String
+  biometricType String?
+  riskScore     Float    @default(0.0)
+  locationData  Json?
+
+  // Relations
+  evidence EvidenceLedger?
+}
+
+// Evidence Ledger: Immutable compliance layer (SOC 2 / ISO 27001)
+model EvidenceLedger {
+  id           String        @id @default(cuid())
+  eventId      String        @unique
+  event        IdentityEvent @relation(fields: [eventId], references: [id])
+
+  createdAt    DateTime @default(now())
+  payloadHash  String
+  previousHash String
+  signature    String
+  verified     Boolean  @default(false)
+
+  @@index([createdAt])
+}

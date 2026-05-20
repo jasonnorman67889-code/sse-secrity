@@ -8,6 +8,8 @@ import { HttpsProxyAgent } from 'https-proxy-agent';
 
 const GENESIS = 'GENESIS';
 const LOOP_MS = 15_000;
+const DEGRADE_DAMPENING_MS = 2_000;
+const DEGRADE_CONSECUTIVE_THRESHOLD = 2;
 const CACHE_FILE = resolve(process.cwd(), 'scripts', '.sentinel-golden-cache.json');
 const AUDIT_LOG_FILE = resolve(process.cwd(), 'logs', 'sentinel_audit.log');
 
@@ -313,6 +315,98 @@ function collectVerifiableRows(rows, secret) {
     return verifiableRows;
 }
 
+function createGraceState() {
+    return {
+        activeSinceMs: null,
+        consecutiveUnresolvedCycles: 0,
+        degraded: false
+    };
+}
+
+function resetGraceState(grace) {
+    grace.activeSinceMs = null;
+    grace.consecutiveUnresolvedCycles = 0;
+    grace.degraded = false;
+}
+
+function resolveEffectiveHealth(state, rawHealth, preHealHadMismatch) {
+    const now = Date.now();
+    const grace = state.integrityGrace;
+
+    if (!rawHealth.ok) {
+        if (grace.activeSinceMs === null) {
+            grace.activeSinceMs = now;
+            grace.consecutiveUnresolvedCycles = 1;
+        } else {
+            grace.consecutiveUnresolvedCycles += 1;
+        }
+
+        const elapsedMs = now - grace.activeSinceMs;
+        const persistentMismatch = grace.consecutiveUnresolvedCycles > DEGRADE_CONSECUTIVE_THRESHOLD;
+        const dampeningElapsed = elapsedMs >= DEGRADE_DAMPENING_MS;
+        const shouldDegrade = persistentMismatch && dampeningElapsed;
+
+        if (shouldDegrade && !grace.degraded) {
+            console.error(
+                `SENTINEL: RED alert triggered | unresolvedCycles=${grace.consecutiveUnresolvedCycles} | elapsedMs=${elapsedMs}`
+            );
+        }
+
+        grace.degraded = shouldDegrade;
+
+        if (grace.degraded) {
+            return {
+                ...rawHealth,
+                ok: false,
+                graceWindow: {
+                    active: true,
+                    unresolvedCycles: grace.consecutiveUnresolvedCycles,
+                    elapsedMs,
+                    dampeningMs: DEGRADE_DAMPENING_MS,
+                    thresholdCycles: DEGRADE_CONSECUTIVE_THRESHOLD
+                }
+            };
+        }
+
+        return {
+            ...rawHealth,
+            ok: true,
+            issues: [],
+            graceWindow: {
+                active: true,
+                unresolvedCycles: grace.consecutiveUnresolvedCycles,
+                elapsedMs,
+                dampeningMs: DEGRADE_DAMPENING_MS,
+                thresholdCycles: DEGRADE_CONSECUTIVE_THRESHOLD
+            }
+        };
+    }
+
+    if (preHealHadMismatch && !grace.degraded) {
+        const elapsedMs = grace.activeSinceMs === null ? 0 : now - grace.activeSinceMs;
+        console.log(
+            `SENTINEL: Soft Recovery | healedWithinGraceWindow=true | elapsedMs=${elapsedMs} | unresolvedCycles=${grace.consecutiveUnresolvedCycles || 1}`
+        );
+        writeSecurityAudit(
+            `[SENTINEL][SOFT_RECOVERY] healedWithinGraceWindow=true elapsedMs=${elapsedMs} unresolvedCycles=${grace.consecutiveUnresolvedCycles || 1}`
+        );
+    }
+
+    resetGraceState(grace);
+    return {
+        ...rawHealth,
+        ok: true,
+        issues: [],
+        graceWindow: {
+            active: false,
+            unresolvedCycles: 0,
+            elapsedMs: 0,
+            dampeningMs: DEGRADE_DAMPENING_MS,
+            thresholdCycles: DEGRADE_CONSECUTIVE_THRESHOLD
+        }
+    };
+}
+
 async function runBootstrap(state, allowTaintedBootstrap) {
     const rows = await getJoinedRows(state.db);
     const health = verifyRows(rows, state.secret);
@@ -381,6 +475,8 @@ async function runSentinelCycle(state) {
     // Log health details for debugging
     console.log(`SENTINEL: Integrity check | ok=${health.ok} | totalEntries=${health.totalEntries} | issues=${health.issues.length}`);
 
+    const preHealHadMismatch = !health.ok;
+
     if (!health.ok) {
         console.warn(`SENTINEL: Integrity issues detected. Issues count: ${health.issues.length}`);
     }
@@ -434,13 +530,17 @@ async function runSentinelCycle(state) {
     }
 
     if (healedRows.length === 0) {
+        const effectiveHealth = resolveEffectiveHealth(state, health, preHealHadMismatch);
         const stamp = new Date().toISOString();
-        console.log(`${stamp} SENTINEL: scan complete | entries=${health.totalEntries} | issues=${health.issues.length}`);
+        console.log(
+            `${stamp} SENTINEL: scan complete | entries=${health.totalEntries} | rawIssues=${health.issues.length} | effectiveOk=${effectiveHealth.ok}`
+        );
         return;
     }
 
     const rowsAfterHeal = await getJoinedRows(state.db);
     const postHealHealth = verifyRows(rowsAfterHeal, state.secret);
+    const effectivePostHealHealth = resolveEffectiveHealth(state, postHealHealth, preHealHadMismatch);
 
     for (const healed of healedRows) {
         const nodeId = healed.workstation_id || 'UNKNOWN';
@@ -457,20 +557,23 @@ async function runSentinelCycle(state) {
 
     for (const healed of healedRows) {
         await publishAutoHealPulse(state.redis, healed, {
-            ok: postHealHealth.ok,
-            totalEntries: postHealHealth.totalEntries,
-            verifiedEntries: postHealHealth.verifiedEntries,
-            lastHash: postHealHealth.lastHash,
-            issues: postHealHealth.issues
+            ok: effectivePostHealHealth.ok,
+            totalEntries: effectivePostHealHealth.totalEntries,
+            verifiedEntries: effectivePostHealHealth.verifiedEntries,
+            lastHash: effectivePostHealHealth.lastHash,
+            issues: effectivePostHealHealth.issues,
+            graceWindow: effectivePostHealHealth.graceWindow
         });
 
         const nodeId = healed.workstation_id || 'UNKNOWN';
-        console.log(`[Sentinel] Node ${nodeId} restored. Integrity: ${postHealHealth.ok ? '100%' : 'DEGRADED'}`);
+        console.log(
+            `[Sentinel] Node ${nodeId} restored. Integrity: ${effectivePostHealHealth.ok ? '100%' : 'DEGRADED'}`
+        );
     }
 
     const stamp = new Date().toISOString();
     console.log(
-        `${stamp} SENTINEL: auto-heal applied | healed=${healedRows.length} | postHealOk=${postHealHealth.ok}`
+        `${stamp} SENTINEL: auto-heal applied | healed=${healedRows.length} | postHealOk=${postHealHealth.ok} | effectiveOk=${effectivePostHealHealth.ok}`
     );
 
     if (!postHealHealth.ok) {
@@ -511,7 +614,8 @@ async function main() {
         secret: process.env.LEDGER_SECRET || 'sovereign-audit-key',
         telegramToken: process.env.TELEGRAM_BOT_TOKEN || '',
         telegramChatId: process.env.TELEGRAM_CHAT_ID || '',
-        goldenCache: loadGoldenCache()
+        goldenCache: loadGoldenCache(),
+        integrityGrace: createGraceState()
     };
 
     if (mode.bootstrap) {
