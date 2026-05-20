@@ -18,7 +18,7 @@
 		"test:correlation": "npx vitest run --config vitest.unit.config.ts src/lib/server/correlation-rule.test.ts src/lib/server/fusion-model.test.ts",
 		"test:correlation:smoke": "node scripts/smoke-correlation-trigger.mjs",
 		"test": "npm run test:e2e",
-		"db:push": "drizzle-kit push",
+		"db:push": "drizzle-kit push --force",
 		"db:generate": "drizzle-kit generate",
 		"db:migrate": "drizzle-kit migrate",
 		"db:studio": "drizzle-kit studio",
