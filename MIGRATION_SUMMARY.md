@@ -27,6 +27,27 @@ Date: 2026-05-20
 - `npm run check` passes.
 - `npm run test:correlation` passes.
 
+## CI Runbook
+
+Use these commands from `sovereign-command-center-2` to validate quality gates locally before or after GitHub Actions:
+
+```powershell
+npm run lint
+npm run check
+npm run test:correlation
+```
+
+Expected outcomes:
+
+- `lint`: Prettier check passes and ESLint reports no errors.
+- `check`: Svelte type diagnostics report 0 errors and 0 warnings.
+- `test:correlation`: Vitest correlation suites pass.
+
+GitHub Actions workflow used by this project:
+
+- `.github/workflows/sovereign-validation.yml`
+- Workflow name: `Sovereign Validation`
+
 ## Notes
 
 - `scripts/sql/correlation_schema.sql` is SQLite syntax. If SQL tooling is configured for T-SQL, editor diagnostics may show syntax errors even though the script is valid for SQLite.
