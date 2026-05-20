@@ -107,9 +107,6 @@ npm run keys:generate
 
 Generated files:
 
-- Private key: `keys/sovereign_private.pem` (git-ignored)
-- Public key: `static/keys/sovereign_public.pem` (served to frontend)
-
 Frontend helper is available at `src/lib/crypto/sovereignPublicKey.ts`.
 
 ## Sovereign Sentinel (Self-Healing Worker)
@@ -138,8 +135,161 @@ npm run sentinel:auto-heal
 
 Behavior:
 
-- Scans every 30 seconds.
-- Auto-reverts tampered `identity_events` rows when a Golden Record is available.
-- Sends Telegram alert on heal action.
-- Publishes `AUTO_HEAL_REVERT` pulse events to Redis `biometric-stream` for HUD feedback.
-# sse-security-as-code
+## Global Grid Quickstart
+
+Use Docker Compose to scale geographically distinct workstation nodes quickly.
+
+1. Ensure the dashboard is running at `http://localhost:5173`.
+2. Start global nodes:
+
+```powershell
+docker compose up -d --build
+```
+
+The compose stack launches nodes for Tokyo, Frankfurt, and Sao Paulo.
+
+## Threat Intel Overlay
+
+The globe includes a threat overlay fed by `GET /api/threat-intel`.
+
+- Red flickering dots represent simulated suspicious infrastructure.
+- Severity is encoded by flicker intensity (`high`, `medium`, `low`).
+
+## Sentinel Watchdog
+
+Run the watchdog to automatically restart Sentinel if it goes offline:
+
+```powershell
+node scripts/sentinel-watchdog.mjs
+```
+
+Optional environment variables:
+
+- `SENTINEL_PROCESS_NAME` (default: `sovereign-sentinel`)
+- `SENTINEL_WATCHDOG_INTERVAL_MS` (default: `10000`)
+
+## Correlation Engine Blueprint
+
+This repository now includes a defensive cross-plane correlation engine.
+
+### New Defensive APIs
+
+- `POST /api/risk/spam-events`
+- `POST /api/risk/identity-logs`
+
+When both of the following occur within 30 minutes for the same `userId`, rule `spam_identity_001` triggers:
+
+1. `spam_events.url_clicked = true`
+2. `identity_logs.type = impossible_travel`
+
+On trigger, SOAR hooks execute:
+
+- Telegram alert attempt (via `PROXY_URL` when configured)
+- Session-revocation placeholder (logged until session storage is configured)
+- HUD update through Redis stream action `SPAM_IDENTITY_CORRELATED`
+
+### SQL Schema
+
+Yes, the SQL schema has been generated for correlation tables:
+
+- `scripts/sql/correlation_schema.sql`
+
+Apply it with your preferred SQLite workflow, or use Drizzle schema sync (`npm run db:push`) after updating `DATABASE_URL`.
+
+### Defensive Pivot Simulation
+
+Use the safe simulation script to test correlation and HUD overlays:
+
+```powershell
+python scripts/pivot-shadow-sim.py
+```
+
+This emits synthetic spam + impossible-travel events and validates the full defensive path. The script exits non-zero on failure and prints `PASS` on success.
+
+Expected visual output:
+
+- Red risk path line (lateral attempt visualization)
+- Yellow exposure marker (spam-plane user exposure)
+
+### Correlation Unit Test
+
+Run the deterministic rule test for enterprise CI/CD validation:
+
+```powershell
+npm run test:correlation
+```
+
+### Enterprise Compose Upgrade
+
+`docker-compose.yml` now includes:
+
+- `neo4j-graph` (ports `7474`, `7687`)
+- `kafka-stream` (port `9092`, KRaft mode)
+- Global workstation nodes (Tokyo, Frankfurt, Sao Paulo)
+
+## Step 0: Defensive Infrastructure Initialization
+
+Initialize the multi-region Kubernetes federation for the 13-phase defensive deployment:
+
+```powershell
+npm run k8s:init:defensive
+```
+
+This executes:
+
+1. Namespace bootstrap:
+    - `simulation`
+    - `telemetry`
+    - `fraud-defense`
+    - `replay`
+    - `governance`
+2. Node labeling for multi-region roles:
+    - Los Angeles command node
+    - London resilience node
+    - Singapore simulation node
+3. Defensive manifests:
+    - `k8s/namespaces/*.yaml`
+    - `k8s/infrastructure/simulation-storage-network.yaml`
+
+### Direct Command Form (If you need manual execution)
+
+```bash
+kubectl create namespace simulation
+kubectl create namespace telemetry
+kubectl create namespace fraud-defense
+kubectl create namespace replay
+kubectl create namespace governance
+
+kubectl label nodes los-angeles-primary region=los-angeles role=command --overwrite
+kubectl label nodes london-secondary region=london role=resilience --overwrite
+kubectl label nodes singapore-replay region=singapore role=simulation --overwrite
+```
+
+Synthetic simulation capacity quota in `simulation` is enforced at:
+
+- `requests.cpu: 4`
+- `requests.memory: 8Gi`
+- `limits.cpu: 8`
+- `limits.memory: 16Gi`
+
+Persistent storage and network isolation for simulation/replay/governance are defined in:
+
+- `k8s/infrastructure/simulation-storage-network.yaml`
+
+## Autonomous SOC Python Agent Dependencies
+
+The LangChain SOC helper uses a pinned Python dependency set for reproducible setup.
+
+Install dependencies:
+
+```powershell
+python -m pip install -r scripts/requirements-autonomous-soc.txt
+```
+
+Run the agent:
+
+```powershell
+python scripts/autonomous-soc-langchain-agent.py
+```
+
+If `OPENAI_API_KEY` (or `OPENAI_ADMIN_KEY`) is not set, the script runs in defensive heuristic fallback mode.

@@ -1,0 +1,4 @@
+# Pinned dependencies for scripts/autonomous-soc-langchain-agent.py
+# Recommended interpreter: Python 3.11 or 3.12
+langchain==0.3.30
+langchain-openai==0.3.35
