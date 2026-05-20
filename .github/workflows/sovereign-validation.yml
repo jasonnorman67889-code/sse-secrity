@@ -27,7 +27,7 @@ jobs:
         with:
           node-version: 20
           cache: npm
-          cache-dependency-path: sovereign-command-center-2/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -35,19 +35,15 @@ jobs:
           python-version: '3.11'
 
       - name: Install JavaScript dependencies
-        working-directory: sovereign-command-center-2
         run: npm ci
 
       - name: Install Python dependencies
-        working-directory: sovereign-command-center-2
         run: python -m pip install -r scripts/requirements-autonomous-soc.txt requests
 
       - name: Sync DB schema
-        working-directory: sovereign-command-center-2
         run: npm run db:push
 
       - name: Start dashboard server
-        working-directory: sovereign-command-center-2
         run: |
           npm run dev:strict > /tmp/sovereign-dev.log 2>&1 &
           echo $! > /tmp/sovereign-dev.pid
@@ -66,7 +62,6 @@ jobs:
           exit 1
 
       - name: Run sovereign validation suite
-        working-directory: sovereign-command-center-2
         run: npm run validate:sovereign
 
       - name: Upload server log on failure
