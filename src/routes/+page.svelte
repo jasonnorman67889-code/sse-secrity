@@ -730,7 +730,7 @@
 						title={`Simulation ${arc.state}: ${arc.sourceNode} -> ${arc.targetNode}`}
 					>
 						{#if arc.state === 'shield'}
-							{#each Array.from({ length: 10 }) as _, index (index)}
+							{#each [...Array(10).keys()] as index (index)}
 								<span class="shield-pixel" style={`--i:${index};`}></span>
 							{/each}
 						{/if}
@@ -772,7 +772,7 @@
 						title={`Simulation ${arc.state}: ${arc.sourceNode} -> ${arc.targetNode}`}
 					>
 						{#if arc.state === 'shield'}
-							{#each Array.from({ length: 10 }) as _, index (index)}
+							{#each [...Array(10).keys()] as index (index)}
 								<span class="shield-pixel" style={`--i:${index};`}></span>
 							{/each}
 						{/if}
@@ -911,7 +911,7 @@
 		<div class="containment-card">
 			<h2>Autonomous Recovery</h2>
 			{#if containmentActions.length > 0}
-				{#each containmentActions as action}
+				{#each containmentActions as action, index (`${action}-${index}`)}
 					<p>{action}</p>
 				{/each}
 			{:else}

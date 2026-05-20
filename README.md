@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD010 -->
+
 # sv
 
 Everything you need to build a Svelte project, powered by [sv](https://github.com/sveltejs/cli).
@@ -75,12 +77,12 @@ POST `api/identity-events` with JSON body:
 
 ```json
 {
-    "actorId": "eng-001",
-    "action": "BIOMETRIC_SUCCESS",
-    "workstationId": "ws-17",
-    "biometricType": "FINGERPRINT",
-    "riskScore": 0.14,
-    "locationData": { "lat": 1.3521, "lng": 103.8198 }
+	"actorId": "eng-001",
+	"action": "BIOMETRIC_SUCCESS",
+	"workstationId": "ws-17",
+	"biometricType": "FINGERPRINT",
+	"riskScore": 0.14,
+	"locationData": { "lat": 1.3521, "lng": 103.8198 }
 }
 ```
 
@@ -238,18 +240,18 @@ npm run k8s:init:defensive
 This executes:
 
 1. Namespace bootstrap:
-    - `simulation`
-    - `telemetry`
-    - `fraud-defense`
-    - `replay`
-    - `governance`
+   - `simulation`
+   - `telemetry`
+   - `fraud-defense`
+   - `replay`
+   - `governance`
 2. Node labeling for multi-region roles:
-    - Los Angeles command node
-    - London resilience node
-    - Singapore simulation node
+   - Los Angeles command node
+   - London resilience node
+   - Singapore simulation node
 3. Defensive manifests:
-    - `k8s/namespaces/*.yaml`
-    - `k8s/infrastructure/simulation-storage-network.yaml`
+   - `k8s/namespaces/*.yaml`
+   - `k8s/infrastructure/simulation-storage-network.yaml`
 
 ### Direct Command Form (If you need manual execution)
 

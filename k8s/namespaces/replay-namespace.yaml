@@ -6,7 +6,7 @@ metadata:
     app.kubernetes.io/name: sovereign-command-center
     app.kubernetes.io/part-of: sovereign-defense-lab
     sovereign.io/layer: replay
-    sovereign.io/isolated: "true"
+    sovereign.io/isolated: 'true'
 ---
 apiVersion: v1
 kind: LimitRange

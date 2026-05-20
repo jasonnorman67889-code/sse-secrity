@@ -1,81 +1,81 @@
 name: Sovereign Validation
 
 on:
-    push:
-        branches: ["**"]
-    pull_request:
+  push:
+    branches: ['**']
+  pull_request:
 
 jobs:
-    validation:
-        runs-on: ubuntu-latest
-        env:
-            DATABASE_URL: file:./local.db
-            REDIS_URL: redis://localhost:6379
-            SCC_BASE_URL: http://localhost:5173
-        services:
-            redis:
-                image: redis:7
-                ports:
-                    - 6379:6379
+  validation:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: file:./local.db
+      REDIS_URL: redis://localhost:6379
+      SCC_BASE_URL: http://localhost:5173
+    services:
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
 
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v4
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-            - name: Setup Node.js
-              uses: actions/setup-node@v4
-              with:
-                  node-version: 20
-                  cache: npm
-                  cache-dependency-path: sovereign-command-center-2/package-lock.json
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: sovereign-command-center-2/package-lock.json
 
-            - name: Setup Python
-              uses: actions/setup-python@v5
-              with:
-                  python-version: "3.11"
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
 
-            - name: Install JavaScript dependencies
-              working-directory: sovereign-command-center-2
-              run: npm ci
+      - name: Install JavaScript dependencies
+        working-directory: sovereign-command-center-2
+        run: npm ci
 
-            - name: Install Python dependencies
-              working-directory: sovereign-command-center-2
-              run: python -m pip install -r scripts/requirements-autonomous-soc.txt requests
+      - name: Install Python dependencies
+        working-directory: sovereign-command-center-2
+        run: python -m pip install -r scripts/requirements-autonomous-soc.txt requests
 
-            - name: Sync DB schema
-              working-directory: sovereign-command-center-2
-              run: npm run db:push
+      - name: Sync DB schema
+        working-directory: sovereign-command-center-2
+        run: npm run db:push
 
-            - name: Start dashboard server
-              working-directory: sovereign-command-center-2
-              run: |
-                  npm run dev:strict > /tmp/sovereign-dev.log 2>&1 &
-                  echo $! > /tmp/sovereign-dev.pid
+      - name: Start dashboard server
+        working-directory: sovereign-command-center-2
+        run: |
+          npm run dev:strict > /tmp/sovereign-dev.log 2>&1 &
+          echo $! > /tmp/sovereign-dev.pid
 
-            - name: Wait for dashboard health
-              run: |
-                  for i in {1..45}; do
-                    if curl -sf http://localhost:5173 > /dev/null; then
-                      echo "Dashboard is up";
-                      exit 0;
-                    fi
-                    sleep 2
-                  done
-                  echo "Dashboard failed to start";
-                  cat /tmp/sovereign-dev.log || true
-                  exit 1
+      - name: Wait for dashboard health
+        run: |
+          for i in {1..45}; do
+            if curl -sf http://localhost:5173 > /dev/null; then
+              echo "Dashboard is up";
+              exit 0;
+            fi
+            sleep 2
+          done
+          echo "Dashboard failed to start";
+          cat /tmp/sovereign-dev.log || true
+          exit 1
 
-            - name: Run sovereign validation suite
-              working-directory: sovereign-command-center-2
-              run: npm run validate:sovereign
+      - name: Run sovereign validation suite
+        working-directory: sovereign-command-center-2
+        run: npm run validate:sovereign
 
-            - name: Upload server log on failure
-              if: failure()
-              run: cat /tmp/sovereign-dev.log || true
+      - name: Upload server log on failure
+        if: failure()
+        run: cat /tmp/sovereign-dev.log || true
 
-            - name: Stop dashboard server
-              if: always()
-              run: |
-                  if [ -f /tmp/sovereign-dev.pid ]; then
-                    kill $(cat /tmp/sovereign-dev.pid) || true
-                  fi
+      - name: Stop dashboard server
+        if: always()
+        run: |
+          if [ -f /tmp/sovereign-dev.pid ]; then
+            kill $(cat /tmp/sovereign-dev.pid) || true
+          fi

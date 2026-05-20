@@ -16,7 +16,7 @@
 
 	let { health = null }: { health?: ChainHealth | null } = $props();
 
-	let loading = $state(true);
+	const loading = $derived(!health);
 
 	const shortHash = (value: string | null) =>
 		value ? `${value.slice(0, 12)}...${value.slice(-8)}` : 'No entries yet';
@@ -27,10 +27,6 @@
 		const seconds = (grace.elapsedMs / 1000).toFixed(1);
 		return `Stabilizing ${seconds}s | cycle ${grace.unresolvedCycles}`;
 	};
-
-	$effect(() => {
-		loading = !health;
-	});
 </script>
 
 <section class="hud-card" aria-live="polite">
@@ -75,7 +71,7 @@
 
 		{#if health.issues.length > 0}
 			<ul class="issues">
-				{#each health.issues as issue}
+				{#each health.issues as issue, index (`${issue}-${index}`)}
 					<li>{issue}</li>
 				{/each}
 			</ul>

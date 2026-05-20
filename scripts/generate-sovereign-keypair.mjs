@@ -14,18 +14,18 @@ const staticPublicKeyExists = existsSync(staticPublicKeyPath);
 const staticRootPublicKeyExists = existsSync(staticRootPublicKeyPath);
 
 if (
-    !force &&
-    privateKeyExists &&
-    rootPublicKeyExists &&
-    staticPublicKeyExists &&
-    staticRootPublicKeyExists
+	!force &&
+	privateKeyExists &&
+	rootPublicKeyExists &&
+	staticPublicKeyExists &&
+	staticRootPublicKeyExists
 ) {
-    console.log('Key files already exist. Use --force to regenerate.');
-    console.log(`Private: ${privateKeyPath}`);
-    console.log(`Public (root): ${rootPublicKeyPath}`);
-    console.log(`Public (static/keys): ${staticPublicKeyPath}`);
-    console.log(`Public (static root): ${staticRootPublicKeyPath}`);
-    process.exit(0);
+	console.log('Key files already exist. Use --force to regenerate.');
+	console.log(`Private: ${privateKeyPath}`);
+	console.log(`Public (root): ${rootPublicKeyPath}`);
+	console.log(`Public (static/keys): ${staticPublicKeyPath}`);
+	console.log(`Public (static root): ${staticRootPublicKeyPath}`);
+	process.exit(0);
 }
 
 mkdirSync(dirname(privateKeyPath), { recursive: true });
@@ -33,15 +33,15 @@ mkdirSync(dirname(staticPublicKeyPath), { recursive: true });
 mkdirSync(dirname(staticRootPublicKeyPath), { recursive: true });
 
 const { privateKey, publicKey } = generateKeyPairSync('ec', {
-    namedCurve: 'prime256v1',
-    privateKeyEncoding: {
-        type: 'pkcs8',
-        format: 'pem'
-    },
-    publicKeyEncoding: {
-        type: 'spki',
-        format: 'pem'
-    }
+	namedCurve: 'prime256v1',
+	privateKeyEncoding: {
+		type: 'pkcs8',
+		format: 'pem'
+	},
+	publicKeyEncoding: {
+		type: 'spki',
+		format: 'pem'
+	}
 });
 
 writeFileSync(privateKeyPath, privateKey, { mode: 0o600 });

@@ -6,7 +6,7 @@ metadata:
     app.kubernetes.io/name: sovereign-command-center
     app.kubernetes.io/part-of: sovereign-defense-lab
     sovereign.io/layer: telemetry
-    sovereign.io/isolated: "true"
+    sovereign.io/isolated: 'true'
 ---
 apiVersion: v1
 kind: ResourceQuota
@@ -15,11 +15,11 @@ metadata:
   namespace: telemetry
 spec:
   hard:
-    requests.cpu: "1"
+    requests.cpu: '1'
     requests.memory: 2Gi
-    limits.cpu: "2"
+    limits.cpu: '2'
     limits.memory: 4Gi
-    pods: "16"
+    pods: '16'
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy

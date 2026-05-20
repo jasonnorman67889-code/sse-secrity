@@ -3,7 +3,9 @@ import { sql } from 'drizzle-orm';
 
 // Identity Audit Pipeline: The live feed.
 export const identityEvents = sqliteTable('identity_events', {
-	id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+	id: text('id')
+		.primaryKey()
+		.$defaultFn(() => crypto.randomUUID()),
 	timestamp: integer('timestamp', { mode: 'timestamp' }).default(sql`(strftime('%s', 'now'))`),
 	actorId: text('actor_id').notNull(),
 	action: text('action').notNull(),
@@ -15,7 +17,9 @@ export const identityEvents = sqliteTable('identity_events', {
 
 // Evidence Ledger: Immutable chain-of-trust entries.
 export const evidenceLedger = sqliteTable('evidence_ledger', {
-	id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+	id: text('id')
+		.primaryKey()
+		.$defaultFn(() => crypto.randomUUID()),
 	eventId: text('event_id')
 		.notNull()
 		.references(() => identityEvents.id),
@@ -28,7 +32,9 @@ export const evidenceLedger = sqliteTable('evidence_ledger', {
 
 // Spam telemetry for correlation (Spam Plane).
 export const spamEvents = sqliteTable('spam_events', {
-	id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+	id: text('id')
+		.primaryKey()
+		.$defaultFn(() => crypto.randomUUID()),
 	userId: text('user_id').notNull(),
 	nodeId: text('node_id').notNull(),
 	urlClicked: integer('url_clicked', { mode: 'boolean' }).notNull().default(false),
@@ -38,7 +44,9 @@ export const spamEvents = sqliteTable('spam_events', {
 
 // Identity behavior logs for impossible-travel and related detections (Identity Plane).
 export const identityLogs = sqliteTable('identity_logs', {
-	id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+	id: text('id')
+		.primaryKey()
+		.$defaultFn(() => crypto.randomUUID()),
 	userId: text('user_id').notNull(),
 	type: text('type').notNull(),
 	nodeId: text('node_id').notNull(),

@@ -6,7 +6,7 @@ metadata:
     app.kubernetes.io/name: sovereign-command-center
     app.kubernetes.io/part-of: sovereign-defense-lab
     sovereign.io/layer: governance
-    sovereign.io/isolated: "true"
+    sovereign.io/isolated: 'true'
 ---
 apiVersion: v1
 kind: ResourceQuota
@@ -15,11 +15,11 @@ metadata:
   namespace: governance
 spec:
   hard:
-    requests.cpu: "1"
+    requests.cpu: '1'
     requests.memory: 2Gi
-    limits.cpu: "2"
+    limits.cpu: '2'
     limits.memory: 4Gi
-    pods: "12"
+    pods: '12'
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -27,6 +27,6 @@ metadata:
   name: governance-readonly
   namespace: governance
 rules:
-  - apiGroups: [""]
-    resources: ["pods", "services", "configmaps", "events"]
-    verbs: ["get", "list", "watch"]
+  - apiGroups: ['']
+    resources: ['pods', 'services', 'configmaps', 'events']
+    verbs: ['get', 'list', 'watch']

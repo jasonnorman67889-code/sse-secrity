@@ -3,57 +3,57 @@ let cachedPem: string | null = null;
 let cachedKey: CryptoKey | null = null;
 
 function pemToArrayBuffer(pem: string): ArrayBuffer {
-    const base64 = pem
-        .replace('-----BEGIN PUBLIC KEY-----', '')
-        .replace('-----END PUBLIC KEY-----', '')
-        .replace(/\s+/g, '');
+	const base64 = pem
+		.replace('-----BEGIN PUBLIC KEY-----', '')
+		.replace('-----END PUBLIC KEY-----', '')
+		.replace(/\s+/g, '');
 
-    const binary = atob(base64);
-    const bytes = new Uint8Array(binary.length);
+	const binary = atob(base64);
+	const bytes = new Uint8Array(binary.length);
 
-    for (let i = 0; i < binary.length; i += 1) {
-        bytes[i] = binary.charCodeAt(i);
-    }
+	for (let i = 0; i < binary.length; i += 1) {
+		bytes[i] = binary.charCodeAt(i);
+	}
 
-    return bytes.buffer;
+	return bytes.buffer;
 }
 
 export async function getSovereignPublicKeyPem(): Promise<string> {
-    if (cachedPem) {
-        return cachedPem;
-    }
+	if (cachedPem) {
+		return cachedPem;
+	}
 
-    for (const path of PUBLIC_KEY_PATHS) {
-        const response = await fetch(path, { cache: 'no-store' });
-        if (!response.ok) {
-            continue;
-        }
+	for (const path of PUBLIC_KEY_PATHS) {
+		const response = await fetch(path, { cache: 'no-store' });
+		if (!response.ok) {
+			continue;
+		}
 
-        cachedPem = await response.text();
-        return cachedPem;
-    }
+		cachedPem = await response.text();
+		return cachedPem;
+	}
 
-    throw new Error(`Failed to load public key from ${PUBLIC_KEY_PATHS.join(' or ')}`);
+	throw new Error(`Failed to load public key from ${PUBLIC_KEY_PATHS.join(' or ')}`);
 }
 
 export async function importSovereignPublicKey(): Promise<CryptoKey> {
-    if (cachedKey) {
-        return cachedKey;
-    }
+	if (cachedKey) {
+		return cachedKey;
+	}
 
-    const pem = await getSovereignPublicKeyPem();
-    const keyBuffer = pemToArrayBuffer(pem);
+	const pem = await getSovereignPublicKeyPem();
+	const keyBuffer = pemToArrayBuffer(pem);
 
-    cachedKey = await crypto.subtle.importKey(
-        'spki',
-        keyBuffer,
-        {
-            name: 'ECDSA',
-            namedCurve: 'P-256'
-        },
-        true,
-        ['verify']
-    );
+	cachedKey = await crypto.subtle.importKey(
+		'spki',
+		keyBuffer,
+		{
+			name: 'ECDSA',
+			namedCurve: 'P-256'
+		},
+		true,
+		['verify']
+	);
 
-    return cachedKey;
+	return cachedKey;
 }

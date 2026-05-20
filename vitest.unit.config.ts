@@ -1,9 +1,9 @@
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
-    test: {
-        include: ['src/**/*.test.ts'],
-        environment: 'node',
-        reporters: ['default']
-    }
+	test: {
+		include: ['src/**/*.test.ts'],
+		environment: 'node',
+		reporters: ['default']
+	}
 });
