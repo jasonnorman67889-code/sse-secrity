@@ -1,1 +1,0 @@
-2026-05-19T11:37:50.283Z [SENTINEL][QUIET_MODE] node=SOVEREIGN-LA-01 telegram_unavailable reason="connect ETIMEDOUT 149.154.166.110:443" action="auto-heal preserved"
